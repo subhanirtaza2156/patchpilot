@@ -1,0 +1,31 @@
+# Place this file in your repository at: .github/workflows/patchpilot.yml
+name: PatchPilot Autonomous Bot
+
+on:
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  autonomous-fix:
+    # Only run on bug reports or specific labels
+    if: contains(github.event.issue.labels.*.name, 'bug') || contains(github.event.issue.title, 'Fix') || contains(github.event.issue.title, 'bug')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run PatchPilot Co-Maintainer
+        uses: subhanirtaza2156/patchpilot@main
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          # Or use Google Gemini 4 Argon:
+          # gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          # llm-provider: "gemini"

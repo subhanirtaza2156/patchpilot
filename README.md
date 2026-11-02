@@ -2,135 +2,133 @@
 
 <div align="center">
 
-[![CI](https://github.com/subhanirtaza2156/patchpilot/actions/workflows/ci.yml/badge.svg)](https://github.com/subhanirtaza2156/patchpilot/actions)
+[![GitHub Action](https://img.shields.io/badge/GitHub%20Action-Marketplace-blue?logo=githubactions&logoColor=white)](https://github.com/subhanirtaza2156/patchpilot)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python: 3.10+](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://www.python.org/)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Polyglot](https://img.shields.io/badge/Languages-Python%20%7C%20TypeScript%20%7C%20Go%20%7C%20Rust%20%7C%20C%2B%2B-orange.svg)](#-universal-multi-language-support)
+[![AI Frontier](https://img.shields.io/badge/AI%20Models-GPT--6.1%20Sol%20%7C%20Gemini%204%20Argon%20%7C%20DeepSeek--V4.1-purple.svg)](#-frontier-reasoning-engines)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](docs/CONTRIBUTING.md)
 
-**The Autonomous Issue-to-Verified-Patch Engine for Open Source Maintainers.**
+**The Autonomous GitHub Action Co-Maintainer for Open Source Repositories.**
 
-*Reproduces bugs deterministically. Generates unified diffs. Verifies test suites in isolated sandboxes.*
+*Triages incoming issues while you sleep. Reproduces bugs deterministically. Opens verified Pull Requests with passing tests.*
 
-[Quickstart](#-quickstart-in-60-seconds) • [Architecture](#-architecture) • [CLI Usage](#-cli-commands) • [Documentation](docs/) • [Contributing](docs/CONTRIBUTING.md)
+[Quickstart Action](#-30-second-github-action-setup) • [Architecture](#-how-it-works-while-you-sleep) • [Polyglot Scanner](#-universal-multi-language-support) • [Documentation](docs/) • [Contributing](docs/CONTRIBUTING.md)
 
 </div>
 
 ---
 
-## ⚡ The Problem
+## ⚡ The Maintainer Dilemma
 
-Open-source maintainers spend up to **70% of their maintenance time** triaging bug reports, deciphering unformatted stack traces, asking for reproduction snippets, and writing regression tests.
+When developers write code interactively, they already use IDE assistants like Cursor or Claude Code.
 
-Standard AI coding assistants generate code suggestions, but they **cannot verify if the patch actually works**, often introducing subtle regressions that waste maintainer review cycles.
+**The real bottleneck happens when the maintainer is AWAY.**
+- While you are asleep or at work, users submit bug reports and crash traces on GitHub.
+- By the time you sit down to code, you have a backlog of 30 issues to manually reproduce, triage, and test.
 
-## 💡 The Solution: PatchPilot
+## 💡 The Solution: PatchPilot Autonomous Bot
 
-`PatchPilot` is a local-first, zero-central-infra autonomous co-maintainer. It takes an incoming GitHub bug issue, scans the codebase using AST symbol analysis, creates an isolated Git worktree, writes a failing reproduction test (**RED**), synthesizes a verified code patch, and runs the entire test suite until all tests pass (**GREEN**).
+`PatchPilot` is a **Headless Asynchronous Co-Maintainer** packaged as a native GitHub Action. 
 
----
-
-## 🏗️ Architecture
+When a user opens an issue on your repository, PatchPilot triggers automatically in GitHub Actions, parses the stack trace, indexes your polyglot codebase, creates an isolated branch, verifies a reproduction test (**RED**), synthesizes a fix with frontier reasoning models, ensures test suites pass (**GREEN**), and opens a ready-to-merge Pull Request with an explanatory comment on the issue!
 
 ```mermaid
-flowchart TD
-    A["GitHub Issue / Bug Report"] --> B["Issue Parser (Tracebacks & Snippets)"]
-    B --> C["AST Symbol Scanner & Relevance Ranker"]
-    C --> D["Git Worktree Sandboxing (Zero Branch Collision)"]
-    D --> E["Synthesize Standalone Reproduction Test"]
-    E --> F{"Execute Test Suite (RED Phase)"}
-    F -->|Verified Failing Test| G["Frontier Reasoning LLM (GPT-6.1 Sol / Gemini 4 Argon / DeepSeek-V4.1)"]
-    F -->|Test Unexpectedly Passes| E
-    G --> H["Apply Unified Diff Patch"]
-    H --> I{"Run Reproduction & Regression Suite"}
-    I -->|All Tests Pass| J["✅ Verified PR / Unified Diff Patch"]
-    I -->|Failure / Regression| K["Iterative Refinement Loop"]
-    K --> G
+sequenceDiagram
+    autonumber
+    actor User as GitHub Contributor / User
+    participant Issue as GitHub Issue Tracker
+    participant Bot as PatchPilot Autonomous Bot (GitHub Actions)
+    participant Engine as Polyglot Scanner & Frontier AI
+    participant PR as Pull Request & Tests
+    actor Maintainer as Repository Maintainer
+
+    User->>Issue: Opens bug report ("Login crashes on empty payload")
+    Issue->>Bot: Triggers on: issues: [opened, labeled]
+    Bot->>Issue: Comments: "🔍 PatchPilot is triaging & reproducing..."
+    Bot->>Engine: Universal Codebase Scan (Python, TS, Go, Rust)
+    Engine->>Engine: Synthesizes failing test (RED) & verified patch (GREEN)
+    Engine->>PR: Creates branch & opens verified Pull Request
+    Bot->>Issue: Comments: "✅ Verified PR created: #42"
+    Maintainer->>PR: Wakes up, reviews green checkmark, and merges!
 ```
 
 ---
 
-## 🚀 Quickstart in 60 Seconds
+## 🚀 30-Second GitHub Action Setup
 
-### 1. Installation
+Add PatchPilot to any open-source repository by dropping this single workflow file into `.github/workflows/patchpilot.yml`:
 
-Install directly via `pip` or clone the repository:
+```yaml
+name: PatchPilot Autonomous Co-Maintainer
 
-```bash
-# Clone the repository
-git clone https://github.com/subhanirtaza2156/patchpilot.git
-cd patchpilot
+on:
+  issues:
+    types: [opened, labeled]
 
-# Install locally
-pip install -e .
-```
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
 
-### 2. Scan Your Repository
+jobs:
+  triage-and-patch:
+    if: contains(github.event.issue.labels.*.name, 'bug') || contains(github.event.issue.title, 'Fix') || contains(github.event.issue.title, 'bug')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-Index all symbols, functions, classes, and dependencies using the local AST engine (zero tokens spent):
-
-```bash
-patchpilot scan .
-```
-
-### 3. Triage an Incoming Issue
-
-Extract stack traces, detect exception types, and locate relevant code files:
-
-```bash
-patchpilot triage "Fix ZeroDivisionError in solver.py" -b "When solver receives empty matrix, it throws ZeroDivisionError"
-```
-
-### 4. Autonomously Solve and Verify
-
-Run the full autonomous Red-to-Green verification loop:
-
-```bash
-# Using OpenAI Frontier Coding Models (GPT-6.1 Sol / GPT-6.1 Terra / Codex)
-export OPENAI_API_KEY="your-api-key"
-patchpilot solve "Fix ZeroDivisionError in solver.py" --provider openai --model gpt-6.1-sol
-
-# Using Google Gemini Frontier Reasoning (Gemini 4 Argon / Gemini 4 Carbon)
-export GEMINI_API_KEY="your-api-key"
-patchpilot solve "Fix ZeroDivisionError in solver.py" --provider gemini --model gemini-4-argon
-
-# Using 100% Free Local Models (DeepSeek-V4.1-Flash / Qwen 2.5 Coder)
-patchpilot solve "Fix ZeroDivisionError in solver.py" --provider ollama --model deepseek-v4.1-flash
-
-# Offline deterministic mock mode (for CI/CD and dry-runs)
-patchpilot solve "Sample issue" --provider mock
+      - name: Run PatchPilot Co-Maintainer
+        uses: subhanirtaza2156/patchpilot@main
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          # Or use Google Gemini 4 Argon:
+          # gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
+          # llm-provider: "gemini"
 ```
 
 ---
 
-## 💻 CLI Commands
+## 🌐 Universal Multi-Language Support
 
-| Command | Description | Example |
+PatchPilot does not rely on single-language parsers. Its **Universal Code Scanner** indexes functions, interfaces, structs, classes, and dependencies across all major ecosystems:
+
+| Language | Supported Extensions | Test Runner Integration |
 | :--- | :--- | :--- |
-| `patchpilot scan [path]` | Scan directory & build AST symbol index | `patchpilot scan ./src` |
-| `patchpilot triage <title>` | Rank relevant files & parse stack traces | `patchpilot triage "Crash on startup" -b "Traceback..."` |
-| `patchpilot solve <title>` | Autonomous reproduction + patch + verify | `patchpilot solve "Issue title" --provider openai` |
-| `patchpilot --version` | Display current PatchPilot version | `patchpilot --version` |
+| **Python** | `.py` | `pytest` / `unittest` |
+| **TypeScript / JavaScript** | `.ts`, `.tsx`, `.js`, `.jsx` | `jest` / `vitest` / `npm test` |
+| **Go** | `.go` | `go test ./...` |
+| **Rust** | `.rs` | `cargo test` |
+| **C / C++** | `.c`, `.cpp`, `.h` | Native test runners |
 
 ---
 
-## 🔌 Supported Frontier LLM Providers (BYOK & Local-First)
+## 🧠 Frontier Reasoning Engines (BYOK)
 
-PatchPilot runs **entirely on your machine**. Your code is never sent to any central server:
+PatchPilot connects directly to frontier reasoning models designed specifically for agentic software engineering:
 
-1. **OpenAI / Codex (BYOK):** Native support for **GPT-6.1 Sol** (agentic coding), **GPT-6.1 Terra**, **o3**, and OpenAI Codex.
-2. **Google Gemini (BYOK):** Native support for **Gemini 4 Argon** (advanced software engineering & reasoning), **Gemini 4 Carbon** (cybersecurity & deep reasoning), and Gemini 2.5 Flash/Pro.
-3. **Local Ollama (100% Offline & Private):** Optimized for **DeepSeek-V4.1-Flash** (1M token context MoE), **Qwen 2.5 Coder**, and Llama.
-4. **Mock Provider:** Deterministic offline mode for testing, demos, and CI workflows.
+- **OpenAI:** Native integration with **GPT-6.1 Sol** (agentic coding), **GPT-6.1 Terra**, and OpenAI Codex.
+- **Google Gemini:** Native integration with **Gemini 4 Argon** (advanced software engineering) and **Gemini 4 Carbon** (cybersecurity & deep reasoning).
+- **Local Ollama:** Compatible with **DeepSeek-V4.1-Flash** (1M token context MoE) and **Qwen 2.5 Coder**.
+- **Mock Provider:** Deterministic offline mode for testing and CI dry-runs.
 
 ---
 
-## 🛡️ Key Features
+## 💻 Optional Local CLI Usage
 
-- **AST Symbol Indexing:** Uses Python's native AST parser to map class hierarchies, argument signatures, and module dependencies without blowing LLM context budgets.
-- **Git Worktree Isolation:** All patches and tests run in temporary `.patchpilot_worktrees/` branches. Your current working directory is never polluted.
-- **Deterministic Red-to-Green Loop:** Guarantees patches solve the bug by first confirming a failing reproduction test, then verifying all regression suites pass.
-- **Unified Diff Output:** Produces standard `git apply`-compatible patches ready for one-click merge or pull request submission.
+While PatchPilot is built to run headlessly in GitHub Actions, maintainers can also run it locally on their terminal:
+
+```bash
+# Universal codebase scan
+patchpilot scan .
+
+# Triage issue against polyglot symbols
+patchpilot triage "Crash in token parser" -b "Traceback at parser.ts:45"
+
+# Local Red-to-Green autonomous solve
+patchpilot solve "Crash in token parser" --provider openai
+```
 
 ---
 
@@ -138,23 +136,23 @@ PatchPilot runs **entirely on your machine**. Your code is never sent to any cen
 
 ```text
 patchpilot/
-├── .github/
-│   ├── workflows/             # Automated CI, Linting, & Release Actions
-│   └── ISSUE_TEMPLATE/        # Standard GitHub issue and PR templates
-├── docs/
-│   ├── ARCHITECTURE.md        # Technical specifications & design doc
-│   ├── ROADMAP.md             # Milestone tracking & SWE-bench goals
-│   ├── CONTRIBUTING.md        # Contributor guidelines & code style
-│   ├── CODE_OF_CONDUCT.md     # Contributor Covenant v2.1
-│   └── SECURITY.md            # Vulnerability disclosure policy
+├── action.yml                 # Official GitHub Action Manifest
+├── examples/
+│   └── patchpilot.yml         # One-click workflow template
 ├── src/
 │   └── patchpilot/
-│       ├── cli.py             # Rich terminal CLI interface
-│       ├── core/              # Orchestrator, AST RepoMap, Issue Parser
-│       ├── git/               # Worktree sandboxing & diff generation
-│       ├── llm/               # Multi-provider LLM abstraction layer
-│       └── verifier/          # TestRunner & Red-to-Green verification loop
-├── tests/                     # Comprehensive pytest test suite
+│       ├── bot/
+│       │   └── github_bot.py  # Headless GitHub Actions Runner & PR Creator
+│       ├── core/
+│       │   ├── universal_scanner.py # Polyglot Code Scanner (PY, TS, GO, RS, C)
+│       │   ├── issue_parser.py      # Stack trace & error extractor
+│       │   └── orchestrator.py      # End-to-end controller
+│       ├── runner/
+│       │   └── multi_runner.py      # Polyglot Test Executor (pytest, jest, cargo, go)
+│       ├── git/
+│       │   └── worktree.py          # Isolated Git sandbox
+│       └── llm/                     # GPT-6.1 Sol, Gemini 4 Argon, DeepSeek-V4.1
+├── tests/                     # Pytest suite with universal scanner tests
 ├── pyproject.toml             # Modern PEP 621 packaging
 └── LICENSE                    # Apache 2.0 License
 ```
@@ -163,7 +161,7 @@ patchpilot/
 
 ## 🤝 Contributing
 
-Contributions are warmly welcomed! Please read our [Contributing Guide](docs/CONTRIBUTING.md) and [Code of Conduct](docs/CODE_OF_CONDUCT.md) before submitting a Pull Request.
+Contributions are warmly welcomed! Please read our [Contributing Guide](docs/CONTRIBUTING.md) and [Code of Conduct](docs/CODE_OF_CONDUCT.md).
 
 ---
 
@@ -174,5 +172,5 @@ Distributed under the **Apache-2.0 License**. See [LICENSE](LICENSE) for more in
 ---
 
 <div align="center">
-Built with ❤️ for the global open-source maintainer community by <b><a href="https://github.com/subhanirtaza2156">Subhan Irtaza</a></b>.
+Built with ❤️ for the global open-source community by <b><a href="https://github.com/subhanirtaza2156">Subhan Irtaza</a></b>.
 </div>

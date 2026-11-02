@@ -1,83 +1,73 @@
-# PatchPilot Architecture & Internal Design
+# PatchPilot Architecture & Headless Bot Design
 
-PatchPilot is engineered to solve a core problem in autonomous software engineering: **bridging the gap between raw natural-language issue reports and deterministic, verified code patches.**
+PatchPilot is an asynchronous, headless co-maintainer packaged as a native GitHub Action. It transforms raw natural-language issue reports into verified, test-backed Pull Requests without requiring the maintainer to open an editor or run local commands.
 
 ---
 
-## High-Level System Architecture
+## Autonomous Asynchronous Sequence
 
 ```text
-+-------------------------------------------------------------------------------+
-|                                  USER / CLI                                   |
-|               (patchpilot triage / patchpilot solve / CI Trigger)             |
-+-------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------+
+|                           EXTERNAL USER / CONTRIBUTOR                             |
+|                        Opens GitHub Issue on Repository                           |
++-----------------------------------------------------------------------------------+
+                                          |
+                                          v (Trigger: issues [opened, labeled])
++-----------------------------------------------------------------------------------+
+|                        PATCHPILOT GITHUB ACTION RUNNER                            |
+|                          (src/patchpilot/bot/github_bot.py)                       |
++-----------------------------------------------------------------------------------+
+             |                                                  |
+             v                                                  v
++--------------------------+                       +--------------------------------+
+|  ISSUE PARSER & TRIAGE   |                       |  UNIVERSAL POLYGLOT SCANNER    |
+| - Extracts tracebacks    |                       | (Python, TS/JS, Go, Rust, C++) |
+| - Detects exception types|                       | - Maps symbols & signatures    |
+| - Identifies target files|                       | - Ranks relevant source files  |
++--------------------------+                       +--------------------------------+
+             \                                                 /
+              \-----------------------+-----------------------/
                                       |
                                       v
-+-------------------------------------------------------------------------------+
-|                             CORE ORCHESTRATOR                                 |
-|                       (src/patchpilot/core/orchestrator.py)                   |
-+-------------------------------------------------------------------------------+
-        |                                       |                      |
-        v                                       v                      v
-+------------------+                   +------------------+   +------------------+
-|   ISSUE PARSER   |                   |  AST REPO MAP    |   |  GIT WORKTREE    |
-| (issue_parser.py)|                   |  (repo_map.py)   |   |  (worktree.py)   |
-| - Stack traces   |                   | - Symbol trees   |   | - Clean sandbox  |
-| - Reproductions  |                   | - Dep graphs     |   | - Zero branch    |
-| - Expected state |                   | - Token pruning  |   |   pollution      |
-+------------------+                   +------------------+   +------------------+
-        |                                       |                      |
-        +-------------------+-------------------+                      |
-                            |                                          |
-                            v                                          v
-+-------------------------------------------------------+   +------------------+
-|                   LLM REASONING LAYER                 |   | VERIFIER RUNNER  |
-|                 (src/patchpilot/llm/)                 |   | (verifier/loop.py|
-| - OpenAI / Codex Client (BYOK)                        |-->| - Execute RED    |
-| - Google Gemini Client (BYOK)                         |   | - Execute GREEN  |
-| - Local Ollama Client (Offline)                       |   | - Check regression
-+-------------------------------------------------------+   +------------------+
-                            |                                          |
-                            +-------------------+----------------------+
-                                                v
-+-------------------------------------------------------------------------------+
-|                           VERIFIED PR ARTIFACT                                |
-|        (Unified Git Diff + Reproduction Test + Explanation Markdown)          |
-+-------------------------------------------------------------------------------+
++-----------------------------------------------------------------------------------+
+|                              FRONTIER REASONING LAYER                             |
+|          (OpenAI GPT-6.1 Sol / Google Gemini 4 Argon / DeepSeek-V4.1-Flash)       |
++-----------------------------------------------------------------------------------+
+                                      |
+                                      v
++-----------------------------------------------------------------------------------+
+|                         POLYGLOT TEST EXECUTION & SANDBOX                         |
+|                 (pytest / jest / cargo test / go test in isolated branch)         |
+| 1. Execute Reproduction Test -> MUST FAIL (RED baseline)                          |
+| 2. Apply Unified Diff Patch -> Execute Test -> MUST PASS (GREEN state)            |
+| 3. Execute Full Regression Suite -> MUST PASS (Zero side-effects)                 |
++-----------------------------------------------------------------------------------+
+                                      |
+                                      v
++-----------------------------------------------------------------------------------+
+|                           AUTOMATED PR & ISSUE COMMENT                            |
+| 1. Pushes branch `patchpilot/fix-issue-#<id>`                                     |
+| 2. Opens Pull Request: "fix: autonomously resolve issue #<id>"                    |
+| 3. Comments on Issue with direct link to ready-to-merge PR                        |
++-----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 1. Context Pruning via AST (Abstract Syntax Tree)
-Standard AI coding agents fail on medium-to-large codebases because they either:
-1. Dump the entire codebase into the LLM context, exhausting token limits and causing hallucinations.
-2. Rely on naive grep/keyword search, missing underlying object references and class hierarchies.
+## 1. Universal Polyglot Parsing
+Rather than being limited to single-language ASTs, PatchPilot's `UniversalCodeScanner` parses structural declarations across:
+- **Python:** `def`, `class`, `import`, type signatures.
+- **TypeScript & JavaScript:** `function`, `class`, `interface`, `type`, ES imports, CommonJS requires.
+- **Go:** `func`, `type ... struct`, `type ... interface`, module imports.
+- **Rust:** `fn`, `struct`, `enum`, `impl`, `use` declarations.
+- **C/C++:** Functions, structs, `#include` headers.
 
-`PatchPilot`'s **RepoMap** parses Python files into ASTs, extracting:
-- Top-level classes, functions, and their signatures.
-- Type annotations and docstring summaries.
-- Import dependency trees.
-
-When an issue mentions a function or error location, PatchPilot builds a focused **Context Subgraph**, reducing token overhead by **60% to 75%** while retaining critical type definitions.
+This gives PatchPilot the ability to triage mixed-language repositories (e.g. fullstack apps with Next.js frontend and Python/Go backend) with a unified relevance ranker.
 
 ---
 
-## 2. The Deterministic Verification Loop (Red-to-Green)
-A patch cannot be trusted simply because an LLM claims it fixed the problem. PatchPilot enforces a strict test verification loop:
-
-1. **Reproduction Phase (RED):**
-   The engine extracts the bug behavior and writes a reproduction test (`test_reproduce_<issue_id>.py`). It executes the test suite. If the test does not fail, the reproduction is considered invalid and refined.
-2. **Patch Synthesis (GREEN):**
-   Given the failing test and AST context, the LLM generates a targeted unified diff.
-3. **Execution & Regression Check:**
-   The patch is applied inside an isolated Git worktree. Both the reproduction test and the existing test suite are executed.
-   - If reproduction passes AND full suite passes: **Verified Patch Generated**.
-   - If tests fail: The failure traceback is fed back to the LLM for iterative refinement (up to max iterations).
-
----
-
-## 3. Sandboxed Git Worktrees
-To prevent corrupting the user's working directory or uncommitted changes, PatchPilot leverages native `git worktree`.
-- A temporary worktree is created under `.patchpilot_worktrees/<branch-name>`.
-- Code changes, test executions, and diff generations occur strictly in this isolated path.
-- Upon completion or cancellation, the worktree is cleanly pruned.
+## 2. Headless GitHub Actions Integration
+Unlike local CLI tools that require active human steering, PatchPilot executes headlessly on GitHub compute:
+- Uses `GITHUB_EVENT_PATH` to extract real-time issue payloads.
+- Uses standard GitHub REST APIs via `httpx` to comment on issues and open verified PRs.
+- Zero local dependencies or manual commands required from the maintainer.

@@ -1,0 +1,46 @@
+name: "PatchPilot Autonomous Co-Maintainer"
+description: "Autonomously reproduces GitHub bug issues, synthesizes verified patches, and opens tested Pull Requests."
+author: "Subhan Irtaza (@subhanirtaza2156)"
+branding:
+  icon: "tool"
+  color: "blue"
+
+inputs:
+  openai-api-key:
+    description: "OpenAI API Key (uses GPT-6.1 Sol / Terra for patch synthesis)"
+    required: false
+  gemini-api-key:
+    description: "Google Gemini API Key (uses Gemini 4 Argon for reasoning)"
+    required: false
+  llm-provider:
+    description: "LLM Provider to use: openai or gemini"
+    required: false
+    default: "openai"
+  github-token:
+    description: "GitHub Token for posting comments and opening PRs"
+    required: false
+    default: ${{ github.token }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install PatchPilot
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        pip install "patchpilot @ git+https://github.com/subhanirtaza2156/patchpilot.git@main"
+
+    - name: Run PatchPilot Autonomous Bot
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+        GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
+        LLM_PROVIDER: ${{ inputs.llm-provider }}
+      run: |
+        patchpilot bot

@@ -1,4 +1,4 @@
-"""Rich-powered Command Line Interface (CLI) for PatchPilot."""
+"""Rich-powered Command Line Interface (CLI) and Autonomous GitHub Bot for PatchPilot."""
 
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from rich.table import Table
 
 from patchpilot import __version__
 from patchpilot.core.orchestrator import PatchPilotOrchestrator
-from patchpilot.core.repo_map import RepoMap
+from patchpilot.core.universal_scanner import UniversalCodeScanner
 
 app = typer.Typer(
     name="patchpilot",
@@ -47,35 +47,37 @@ def main_callback(
 def scan_repo(
     path: Path = typer.Argument(Path("."), help="Path to repository root to scan."),
 ):
-    """Scan and index repository symbols using AST without calling any LLM."""
+    """Scan and index repository symbols across Python, JS/TS, Go, Rust, and C/C++."""
     resolved_path = path.resolve()
-    console.print(Panel(f"[bold cyan]Scanning Repository:[/bold cyan] {resolved_path}", border_style="cyan"))
+    console.print(Panel(f"[bold cyan]Universal Multi-Language Scanner:[/bold cyan] {resolved_path}", border_style="cyan"))
 
-    repo_map = RepoMap(resolved_path)
+    scanner = UniversalCodeScanner(resolved_path)
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
         transient=True,
     ) as progress:
-        progress.add_task(description="Parsing AST symbols...", total=None)
-        files_map = repo_map.scan()
+        progress.add_task(description="Scanning symbols across all languages...", total=None)
+        files_map = scanner.scan()
 
-    table = Table(title="AST Repository Index", show_header=True, header_style="bold magenta")
+    table = Table(title="Universal Codebase Index", show_header=True, header_style="bold magenta")
     table.add_column("File Path", style="cyan")
+    table.add_column("Language", style="magenta")
     table.add_column("Lines", justify="right", style="green")
-    table.add_column("Classes/Functions", justify="right", style="yellow")
-    table.add_column("Imports", justify="right", style="blue")
+    table.add_column("Symbols (Funcs/Structs/Classes)", justify="right", style="yellow")
+    table.add_column("Imports/Dependencies", justify="right", style="blue")
 
-    for rel_path, meta in list(files_map.items())[:15]:
+    for rel_path, meta in list(files_map.items())[:20]:
         table.add_row(
             rel_path,
+            meta.language,
             str(meta.total_lines),
             str(len(meta.symbols)),
             str(len(meta.imports)),
         )
 
     console.print(table)
-    console.print(f"[green]✓[/green] Successfully indexed [bold]{len(files_map)}[/bold] Python files.")
+    console.print(f"[green]✓[/green] Successfully indexed [bold]{len(files_map)}[/bold] polyglot source files.")
 
 
 @app.command("triage")
@@ -85,7 +87,7 @@ def triage_issue(
     file: Optional[Path] = typer.Option(None, "--file", "-f", help="Path to markdown issue file"),
     path: Path = typer.Option(Path("."), "--path", "-p", help="Path to repository"),
 ):
-    """Analyze an issue, extract stack traces, and rank relevant code files."""
+    """Analyze an issue, extract stack traces, and rank relevant code files across all languages."""
     if file and file.exists():
         body = file.read_text(encoding="utf-8")
 
@@ -95,7 +97,7 @@ def triage_issue(
         TextColumn("[progress.description]{task.description}"),
         transient=True,
     ) as progress:
-        progress.add_task(description="Triaging issue against AST map...", total=None)
+        progress.add_task(description="Triaging issue against Universal Codebase map...", total=None)
         triage_info = orchestrator.triage(title=title, body=body)
 
     parsed = triage_info["parsed_issue"]
@@ -146,7 +148,7 @@ def solve_issue(
         TextColumn("[progress.description]{task.description}"),
         transient=True,
     ) as progress:
-        task = progress.add_task(description="Executing Red-to-Green verification loop...", total=None)
+        progress.add_task(description="Executing Red-to-Green verification loop...", total=None)
         try:
             result = orchestrator.solve(
                 title=title,
@@ -168,6 +170,14 @@ def solve_issue(
     console.print("\n[bold]Step Logs:[/bold]")
     for log in outcome.step_logs:
         console.print(f"  • {log}")
+
+
+@app.command("bot")
+def run_github_bot():
+    """Headless entry point executed in GitHub Actions when an issue is reported."""
+    from patchpilot.bot.github_bot import GitHubActionBot
+    bot = GitHubActionBot()
+    bot.run()
 
 
 def main():
