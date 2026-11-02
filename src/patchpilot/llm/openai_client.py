@@ -1,4 +1,4 @@
-"""OpenAI and Codex API provider for PatchPilot."""
+"""OpenAI and Codex API provider for PatchPilot supporting GPT-6.1 Sol/Terra and o-series."""
 
 from __future__ import annotations
 
@@ -10,12 +10,12 @@ from patchpilot.llm.base import BaseLLMClient
 
 
 class OpenAILLMClient(BaseLLMClient):
-    """Client for OpenAI models (GPT-4o, o-series, Codex)."""
+    """Client for frontier OpenAI models (GPT-6.1 Sol, GPT-6.1 Terra, o3, Codex)."""
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "gpt-4o",
+        model: str = "gpt-6.1-sol",
         base_url: str = "https://api.openai.com/v1",
     ) -> None:
         self.api_key = api_key or os.getenv("OPENAI_API_KEY", "")

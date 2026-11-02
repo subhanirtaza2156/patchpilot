@@ -47,11 +47,11 @@ class PatchPilotOrchestrator:
     ) -> BaseLLMClient:
         prov = provider.lower()
         if prov == "openai":
-            return OpenAILLMClient(api_key=api_key, model=model or "gpt-4o")
+            return OpenAILLMClient(api_key=api_key, model=model or "gpt-6.1-sol")
         elif prov == "gemini":
-            return GeminiLLMClient(api_key=api_key, model=model or "gemini-2.5-flash")
+            return GeminiLLMClient(api_key=api_key, model=model or "gemini-4-argon")
         elif prov == "ollama":
-            return OllamaLLMClient(model=model or "llama3:latest")
+            return OllamaLLMClient(model=model or "deepseek-v4.1-flash")
         else:
             return MockLLMClient()
 

@@ -39,7 +39,7 @@ flowchart TD
     C --> D["Git Worktree Sandboxing (Zero Branch Collision)"]
     D --> E["Synthesize Standalone Reproduction Test"]
     E --> F{"Execute Test Suite (RED Phase)"}
-    F -->|Verified Failing Test| G["LLM Patch Synthesizer (Codex / Gemini / Local Ollama)"]
+    F -->|Verified Failing Test| G["Frontier Reasoning LLM (GPT-6.1 Sol / Gemini 4 Argon / DeepSeek-V4.1)"]
     F -->|Test Unexpectedly Passes| E
     G --> H["Apply Unified Diff Patch"]
     H --> I{"Run Reproduction & Regression Suite"}
@@ -86,14 +86,18 @@ patchpilot triage "Fix ZeroDivisionError in solver.py" -b "When solver receives 
 Run the full autonomous Red-to-Green verification loop:
 
 ```bash
-# Using OpenAI Codex / GPT-4o (BYOK)
+# Using OpenAI Frontier Coding Models (GPT-6.1 Sol / GPT-6.1 Terra / Codex)
 export OPENAI_API_KEY="your-api-key"
-patchpilot solve "Fix ZeroDivisionError in solver.py" --provider openai
+patchpilot solve "Fix ZeroDivisionError in solver.py" --provider openai --model gpt-6.1-sol
 
-# Or using 100% Free Local Ollama (Offline)
-patchpilot solve "Fix ZeroDivisionError in solver.py" --provider ollama --model deepseek-coder
+# Using Google Gemini Frontier Reasoning (Gemini 4 Argon / Gemini 4 Carbon)
+export GEMINI_API_KEY="your-api-key"
+patchpilot solve "Fix ZeroDivisionError in solver.py" --provider gemini --model gemini-4-argon
 
-# Or offline mock mode (for CI/CD and dry-runs)
+# Using 100% Free Local Models (DeepSeek-V4.1-Flash / Qwen 2.5 Coder)
+patchpilot solve "Fix ZeroDivisionError in solver.py" --provider ollama --model deepseek-v4.1-flash
+
+# Offline deterministic mock mode (for CI/CD and dry-runs)
 patchpilot solve "Sample issue" --provider mock
 ```
 
@@ -110,13 +114,13 @@ patchpilot solve "Sample issue" --provider mock
 
 ---
 
-## 🔌 Supported LLM Providers (BYOK & Local-First)
+## 🔌 Supported Frontier LLM Providers (BYOK & Local-First)
 
 PatchPilot runs **entirely on your machine**. Your code is never sent to any central server:
 
-1. **OpenAI / Codex (BYOK):** Supports `gpt-4o`, `o1`, `o3-mini`, and OpenAI Codex.
-2. **Google Gemini (BYOK):** Supports `gemini-2.5-flash` and `gemini-2.5-pro`.
-3. **Local Ollama (100% Offline & Private):** Works with `llama3`, `deepseek-coder`, `qwen2.5-coder`.
+1. **OpenAI / Codex (BYOK):** Native support for **GPT-6.1 Sol** (agentic coding), **GPT-6.1 Terra**, **o3**, and OpenAI Codex.
+2. **Google Gemini (BYOK):** Native support for **Gemini 4 Argon** (advanced software engineering & reasoning), **Gemini 4 Carbon** (cybersecurity & deep reasoning), and Gemini 2.5 Flash/Pro.
+3. **Local Ollama (100% Offline & Private):** Optimized for **DeepSeek-V4.1-Flash** (1M token context MoE), **Qwen 2.5 Coder**, and Llama.
 4. **Mock Provider:** Deterministic offline mode for testing, demos, and CI workflows.
 
 ---

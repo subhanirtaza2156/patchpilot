@@ -1,4 +1,4 @@
-"""Local Ollama model provider for PatchPilot."""
+"""Local Ollama model provider for PatchPilot supporting DeepSeek-V4.1 and Qwen."""
 
 from __future__ import annotations
 
@@ -9,11 +9,11 @@ from patchpilot.llm.base import BaseLLMClient
 
 
 class OllamaLLMClient(BaseLLMClient):
-    """Client for locally running models via Ollama."""
+    """Client for locally running models via Ollama (DeepSeek-V4.1-Flash, Qwen 2.5 Coder)."""
 
     def __init__(
         self,
-        model: str = "llama3:latest",
+        model: str = "deepseek-v4.1-flash",
         base_url: str = "http://localhost:11434",
     ) -> None:
         self.model = model

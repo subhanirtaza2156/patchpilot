@@ -1,4 +1,4 @@
-"""Google Gemini API provider for PatchPilot."""
+"""Google Gemini API provider for PatchPilot supporting Gemini 4 Argon & Carbon."""
 
 from __future__ import annotations
 
@@ -10,12 +10,12 @@ from patchpilot.llm.base import BaseLLMClient
 
 
 class GeminiLLMClient(BaseLLMClient):
-    """Client for Google Gemini models (gemini-2.5-flash, gemini-2.5-pro)."""
+    """Client for frontier Google Gemini models (Gemini 4 Argon, Gemini 4 Carbon, Gemini 2.5)."""
 
     def __init__(
         self,
         api_key: Optional[str] = None,
-        model: str = "gemini-2.5-flash",
+        model: str = "gemini-4-argon",
     ) -> None:
         self.api_key = api_key or os.getenv("GEMINI_API_KEY", "")
         self.model = model
