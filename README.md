@@ -9,6 +9,7 @@
 ---
 
 [![GitHub Action](https://img.shields.io/badge/GitHub%20Action-Marketplace-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/subhanirtaza2156/patchpilot)
+[![Antigravity SDK](https://img.shields.io/badge/Agent%20SDK-Google%20Antigravity-4285F4?style=for-the-badge&logo=google&logoColor=white)](https://github.com/google-antigravity/antigravity-sdk-python)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue?style=for-the-badge)](https://opensource.org/licenses/Apache-2.0)
 [![Zero-Trust Security](https://img.shields.io/badge/Security-Zero--Trust%20Guardrails-green?style=for-the-badge&logo=securityscorecard&logoColor=white)](docs/SECURITY.md)
 [![Polyglot](https://img.shields.io/badge/Polyglot-Python%20%7C%20TS%20%7C%20Go%20%7C%20Rust%20%7C%20C%2B%2B-orange?style=for-the-badge)](#-universal-polyglot-intelligence)
