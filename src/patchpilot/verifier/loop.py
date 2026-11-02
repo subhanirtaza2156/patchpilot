@@ -1,4 +1,4 @@
-"""Red-to-Green deterministic verification loop for autonomous patch validation."""
+"""Red-to-Green deterministic verification loop with Security Guardrails."""
 
 from __future__ import annotations
 
@@ -7,6 +7,7 @@ from typing import List, Optional
 from pydantic import BaseModel
 from patchpilot.git.worktree import GitWorktreeManager
 from patchpilot.llm.base import BaseLLMClient
+from patchpilot.security.guardrails import SecurityGuard
 from patchpilot.verifier.runner import TestRunner
 
 
@@ -20,7 +21,7 @@ class VerificationOutcome(BaseModel):
 
 
 class VerificationLoop:
-    """Orchestrates iterative Red-to-Green testing against an isolated git worktree."""
+    """Orchestrates iterative Red-to-Green testing against an isolated git worktree with strict security bounds."""
 
     def __init__(
         self,
@@ -42,6 +43,20 @@ class VerificationLoop:
         initial_reproduction_test: str,
     ) -> VerificationOutcome:
         logs: List[str] = []
+        logs.append("Security Check: Validating reproduction test safety")
+
+        # 0. AppSec Gate: Validate reproduction test for dangerous syscalls
+        is_safe_test, test_violations = SecurityGuard.validate_reproduction_test(initial_reproduction_test)
+        if not is_safe_test:
+            error_msg = f"Security Violation in test code: {', '.join(test_violations)}"
+            logs.append(f"CRITICAL: {error_msg}")
+            return VerificationOutcome(
+                success=False,
+                iterations=0,
+                error_message=error_msg,
+                step_logs=logs,
+            )
+
         logs.append("Phase 1: Establishing RED baseline (reproduction verification)")
 
         # 1. Place the reproduction test in the worktree
@@ -73,12 +88,20 @@ class VerificationLoop:
                     failing_output=current_error,
                 )
             else:
-                logs.append(f"Refining patch based on previous failure...")
+                logs.append("Refining patch based on previous failure...")
                 current_patch = self.llm.refine_patch(
                     previous_patch=current_patch,
                     error_output=current_error,
                     repo_context=repo_context,
                 )
+
+            # Security Gate: Validate patch diff does NOT touch sensitive paths (.github, .env, etc.)
+            is_safe_diff, diff_violations = SecurityGuard.validate_patch_diff(current_patch)
+            if not is_safe_diff:
+                error_msg = f"Security Violation: {', '.join(diff_violations)}"
+                logs.append(f"SECURITY BLOCKED: {error_msg}")
+                current_error = error_msg
+                continue
 
             # Apply patch
             applied, apply_msg = self.git_manager.apply_patch(self.worktree_path, current_patch)
@@ -97,7 +120,7 @@ class VerificationLoop:
             # Run full test suite for regression verification
             full_suite_run = TestRunner.run_tests(self.worktree_path)
             if full_suite_run.success:
-                logs.append("Phase 3: GREEN state achieved! All tests passed.")
+                logs.append("Phase 3: GREEN state achieved! All tests passed and security bounds verified.")
                 final_diff = self.git_manager.get_diff(self.worktree_path)
                 return VerificationOutcome(
                     success=True,
