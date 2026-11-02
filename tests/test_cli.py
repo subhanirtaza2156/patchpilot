@@ -16,7 +16,7 @@ def test_cli_version():
 def test_cli_scan(temp_git_repo: Path):
     result = runner.invoke(app, ["scan", str(temp_git_repo)])
     assert result.exit_code == 0
-    assert "AST Repository Index" in result.stdout
+    assert "Universal Codebase Index" in result.stdout
 
 
 def test_cli_triage(temp_git_repo: Path):

@@ -77,7 +77,7 @@ def scan_repo(
         )
 
     console.print(table)
-    console.print(f"[green]✓[/green] Successfully indexed [bold]{len(files_map)}[/bold] polyglot source files.")
+    console.print(f"[green][OK][/green] Successfully indexed [bold]{len(files_map)}[/bold] polyglot source files.")
 
 
 @app.command("triage")
