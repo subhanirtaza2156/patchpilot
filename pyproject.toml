@@ -1,0 +1,80 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "patchpilot"
+version = "0.1.0"
+description = "Autonomous Issue-to-Verified-Patch Engine for Open Source Maintainers"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Subhan Irtaza", email = "subhanirtaza2156@users.noreply.github.com" },
+]
+keywords = [
+    "ai",
+    "codex",
+    "swe-bench",
+    "git",
+    "automated-bug-fixing",
+    "code-repair",
+    "developer-tools",
+    "open-source-maintainer",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Bug Tracking",
+    "Topic :: Software Development :: Quality Assurance",
+    "Topic :: Software Development :: Testing",
+]
+dependencies = [
+    "typer>=0.12.0",
+    "rich>=13.7.0",
+    "pydantic>=2.6.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.4.0",
+    "mypy>=1.9.0",
+]
+
+[project.scripts]
+patchpilot = "patchpilot.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/subhanirtaza2156/patchpilot"
+Documentation = "https://github.com/subhanirtaza2156/patchpilot#readme"
+Repository = "https://github.com/subhanirtaza2156/patchpilot"
+Issues = "https://github.com/subhanirtaza2156/patchpilot/issues"
+Changelog = "https://github.com/subhanirtaza2156/patchpilot/blob/main/docs/ROADMAP.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/patchpilot"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-v --strict-markers"

@@ -1,0 +1,47 @@
+name: 🐛 Bug Report
+description: File a bug report to help improve PatchPilot
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report an issue! Please provide as much detail as possible.
+  - type: input
+    id: version
+    attributes:
+      label: PatchPilot Version
+      description: What version of PatchPilot are you running? (Run `patchpilot --version`)
+      placeholder: "v0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS & Python Version
+      description: e.g. Windows 11 / Ubuntu 22.04, Python 3.12
+      placeholder: "Windows 11, Python 3.12.3"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. Run `patchpilot triage https://github.com/owner/repo/issues/1`
+        2. See error output...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal Output / Stack Trace
+      description: Paste any relevant terminal logs or stack traces here.
+      render: shell
